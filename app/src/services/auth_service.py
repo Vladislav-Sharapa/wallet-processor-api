@@ -1,3 +1,5 @@
+from app.src.core.config import config
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.core.redis import RedisClient
 from app.src.exceptions.auth_exceptions import InvalidUserPasswordException
@@ -7,7 +9,8 @@ from app.src.utils.auth_security import verify_password
 from app.src.models.user import User
 from app.src.schemas.user_schemas import RequestUserModel, ResponseUserModel, UserModel
 from app.src.services.user import UserService
-from app.src.utils.jwt import JWTHandler
+from app.src.utils.jwt import JWTHandler, get_refresh_token_payload
+from app.src.utils.token_handlers import get_current_auth_user
 
 
 class AuthService:
@@ -25,7 +28,8 @@ class AuthService:
 
         return response
 
-    async def login(self, request: RequestUserLoginInfoModel, key: str) -> TokenInfo:
+    async def login(self, request: RequestUserLoginInfoModel) -> TokenInfo:
+        key = await self.__check_login_attempts(request.username)
         user = await self.__authenticate(request.username, request.password, key)
 
         token_info = await self.__generate_tokens(user)
@@ -34,7 +38,10 @@ class AuthService:
 
         return token_info
 
-    async def refresh(self, user: UserModel) -> TokenInfo:
+    async def refresh(self, token: str) -> TokenInfo:
+        token_payload = get_refresh_token_payload(token)
+        user = await get_current_auth_user(token_payload, self.user_sevice)
+
         access_token = JWTHandler.create_access_token(user)
 
         return TokenInfo(access_token=access_token)
@@ -74,6 +81,21 @@ class AuthService:
             await self.__track_attempts(key)
             raise InvalidUserPasswordException
         return UserModel.model_validate(user)
+
+    async def __check_login_attempts(self, username: str) -> str:
+        """Method that checks login attempts for a given user email."""
+
+        key = f"login_attempts:{username}"
+
+        async with self.__redis_client as storage:
+            attempts = await storage.get(key)
+
+        if attempts and int(attempts) >= config.auth.MAX_LOGIN_ATTEMPTS:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many failed login attempts. Try again later.",
+            )
+        return key
 
     async def __track_attempts(self, key: str) -> None:
         """

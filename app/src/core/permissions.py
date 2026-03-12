@@ -1,8 +1,9 @@
 from typing import List, override
 from fastapi import Depends, HTTPException, status
 
-from app.src.api.depedencies.auth import get_current_role
+from app.src.api.depedencies.auth import get_auth_token
 from app.src.schemas.auth import RoleEnum
+from app.src.utils.token_handlers import get_current_role
 
 
 class BasePermisson:
@@ -27,7 +28,8 @@ class PermissionsDependency:
     def __init__(self, permissions_classes: List[BasePermisson]):
         self.permissions_classes = permissions_classes
 
-    def __call__(self, role: str = Depends(get_current_role)):
+    def __call__(self, token: str = Depends(get_auth_token)):
+        role = get_current_role(token)
         for permission_class in self.permissions_classes:
             permission_class(role)
 

@@ -2,12 +2,14 @@ from datetime import timedelta, datetime, timezone
 
 from typing import Any, Dict, Optional
 import uuid
+from fastapi import HTTPException, status
 import jwt
 
 from app.src.core.config import config
 from app.src.schemas.auth import (
     AccessTokenPayload,
     RefreshTokenPayload,
+    ResetPasswordTokenPayload,
     TokenTypeEnum,
 )
 from app.src.schemas.user_schemas import UserModel
@@ -35,6 +37,19 @@ def decode_token(token: str) -> Dict[str, Any]:
     Decode JWT token
     """
     payload: dict = jwt.decode(token, config.auth.SECRET, config.auth.ALGORITH)
+    return payload
+
+
+def get_current_token_payload(token: str):
+    """
+    Extract and validate the payload from the current JWT token
+    """
+    try:
+        payload = decode_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            detail="Signature has expired", status_code=status.HTTP_400_BAD_REQUEST
+        )
     return payload
 
 
@@ -77,3 +92,46 @@ class JWTHandler:
         )
 
         return token
+
+    @staticmethod
+    async def create_reset_token(user: UserModel) -> str:
+        jwt_payload = ResetPasswordTokenPayload(email=user.email)
+        token = await JWTHandler.__create_token(
+            token_type=TokenTypeEnum.RESET_TOKEN_TYPE,
+            token_data=jwt_payload.model_dump(),
+            expire_minutes=config.auth.RESET_TOKEN_EXPIRE_MINUTES,
+        )
+
+        return token
+
+
+class TokenTypeValidator:
+    """
+    Allows to get payload from a token depending on valid type.
+    """
+
+    def __init__(self, token_type: str):
+        self.token_type = token_type
+
+    def __call__(
+        self,
+        token: str,
+    ) -> dict:
+        payload = get_current_token_payload(token)
+        self.__validate_token_type(payload, self.token_type)
+
+        return payload
+
+    def __validate_token_type(self, payload: dict, token_type: str) -> None:
+        current_token_type = payload.get("type")
+        if current_token_type == token_type:
+            return
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"invalid token type {current_token_type!r} expected {token_type!r}",
+        )
+
+
+get_access_token_payload = TokenTypeValidator(TokenTypeEnum.ACCESS_TOKEN_TYPE)
+get_refresh_token_payload = TokenTypeValidator(TokenTypeEnum.REFRESH_TOKEN_TYPE)
+get_reset_token_payload = TokenTypeValidator(TokenTypeEnum.RESET_TOKEN_TYPE)
