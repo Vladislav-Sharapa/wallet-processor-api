@@ -80,7 +80,7 @@ class RequestResetPasswordService:
 
         if not code:
             raise NoResetPasswordCode
-        elif int(code) != int(request.code):
+        elif code != request.code:
             raise InvalidResetCodeException
 
         user = await self.__user_service.get_active_user_by_email(request.email)
