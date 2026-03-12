@@ -1,7 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.src.analytics.transaction_metrics import MetricsProvider
 from app.src.core.database import get_async_session
 from app.src.services.flows.transaction_flows import (
     CreateTransactionUseCase,
@@ -26,9 +25,3 @@ def get_transaction_roll_back_use_case(
     session: AsyncSession = Depends(get_async_session),
 ) -> TransactionRollBackUseCase:
     return TransactionRollBackUseCase(session=session)
-
-
-def get_metrics_provider(
-    session: AsyncSession = Depends(get_async_session),
-):
-    return MetricsProvider(session=session)
