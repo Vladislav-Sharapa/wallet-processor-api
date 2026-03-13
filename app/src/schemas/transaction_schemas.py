@@ -37,3 +37,12 @@ class TransactionModel(BaseModel):
     created: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class WeekTransactionAnalyticsModel(BaseModel):
+    registered_user_count: Optional[int] = None
+    registered_and_deposit_users_count: Optional[int] = None
+    not_rollbacked_deposit_sum: Optional[int] = None
+    not_rollbacked_withdraw_sum: Optional[int] = None
+    transactions_count: Optional[int] = None
+    not_rollbacked_transactions: Optional[int] = None

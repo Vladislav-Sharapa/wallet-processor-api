@@ -58,6 +58,20 @@ services:
             timeout: 5s
             retries: 5
             start_period: 10s
-
+    rebbitmq:
+        image: rabbitmq:3-management-alpine
+        hostname: rabbitmq
+        container_name: rabbitmq
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        env_file:
+            - ".env"
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+        volumes:
+            - rabbitmq-data:/var/lib/rabbitmq
 volumes:
     postgres_data:
+    rabbitmq-data:
