@@ -1,0 +1,33 @@
+version: '3'
+
+
+tasks:
+
+  docker:build:
+    desc: Build dev docker images
+    cmds:
+      - "docker compose --profile dev --env-file .env build"
+    silent: true
+
+  docker:up:
+    desc: Run dev docker containers
+    cmds:
+      - "docker compose --profile dev --env-file .env up"
+    silent: true
+
+  docker:down:
+    desc: Stop dev docker containers
+    cmds:
+      - "docker compose --profile dev --env-file .env down"
+    silent: true
+
+  docker:tests:
+    desc: Run test enviroment
+    cmds:
+      - "docker compose --profile test --env-file .test-env build"
+      - "docker compose --profile test --env-file .test-env up"
+
+  worker:start:
+    desc: Start taskiq workers
+    cmds: 
+      - "taskiq worker app.src.core.taskiq:broker --fs-discover --tasks-pattern **/tasks"
