@@ -1,5 +1,6 @@
 services:
     redis:
+        profiles: ["dev", "test"]
         image: redis:latest
         container_name: redis_container
         environment:
@@ -36,6 +37,7 @@ services:
         tty: true
         stdin_open: true
     postgres:
+        profiles: ["dev", "test"]
         container_name: ${POSTGRES_CONTAINER_NAME}
         image: postgres:latest
         restart: always
@@ -58,13 +60,14 @@ services:
             timeout: 5s
             retries: 5
             start_period: 10s
-    rebbitmq:
+    rabbitmq:
+        profiles: ["dev", "test"]
         image: rabbitmq:3-management-alpine
         hostname: rabbitmq
         container_name: rabbitmq
         ports:
-            - "5672:5672"
-            - "15672:15672"
+            - "${RABBITMQ_PORT}:5672"
+            - "${RABBITMQ_MANAGEMENT_PORT}:15672"
         env_file:
             - ".env"
         environment:
@@ -72,6 +75,22 @@ services:
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         volumes:
             - rabbitmq-data:/var/lib/rabbitmq
+    maildev:
+      profiles: ["test"]
+      image: maildev/maildev
+      environment:
+        - TZ=Europe/Moscow
+        - MAILDEV_WEB_PORT=${MAILDEV_WEB_PORT}
+        - MAILDEV_SMTP_PORT=${MAILDEV_SMTP_PORT}
+      ports:
+        - "${MAILDEV_WEB_PORT}:1080"
+        - "${MAILDEV_SMTP_PORT}:1025"
+      env_file:
+            - ".test-env"
+      logging:
+        driver: "json-file"
+        options:
+          max-size: "1m"
 volumes:
     postgres_data:
     rabbitmq-data:
