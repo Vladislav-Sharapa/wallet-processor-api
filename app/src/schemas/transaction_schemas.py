@@ -40,6 +40,8 @@ class TransactionModel(BaseModel):
 
 
 class WeekTransactionAnalyticsModel(BaseModel):
+    start_date: Optional[str]
+    end_date: Optional[str]
     registered_user_count: Optional[int] = None
     registered_and_deposit_users_count: Optional[int] = None
     not_rollbacked_deposit_sum: Optional[int] = None

@@ -29,6 +29,12 @@ def get_auth_token(token: Annotated[str, Depends(oauth2_scheme)]):
     return token
 
 
+def get_current_user_id(token: Annotated[str, Depends(get_auth_token)]) -> int:
+    payload = get_access_token_payload(token)
+
+    return payload.get("user_id", None)
+
+
 async def check_user_ownership(
     user_id: int = Path(ge=0),
     token: str = Depends(get_auth_token),
