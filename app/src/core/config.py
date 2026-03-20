@@ -4,6 +4,7 @@ from app.src.settings.auth import AuthSetting
 from app.src.settings.broker import RabbitMQSettings
 from app.src.settings.database import PostgreSQLSetting
 from app.src.settings.email import EmailSetting
+from app.src.settings.minio import MinioSettings
 from app.src.settings.redis import RedisSetting
 
 
@@ -15,6 +16,7 @@ class Config:
     broker: RabbitMQSettings = RabbitMQSettings()
     analytics: AnalyticsSettings = AnalyticsSettings()
     email: EmailSetting = EmailSetting()
+    minio: MinioSettings = MinioSettings()
 
 
 config = Config()
