@@ -58,7 +58,7 @@ services:
             timeout: 5s
             retries: 5
             start_period: 10s
-    rebbitmq:
+    rabbitmq:
         image: rabbitmq:3-management-alpine
         hostname: rabbitmq
         container_name: rabbitmq
@@ -72,6 +72,24 @@ services:
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         volumes:
             - rabbitmq-data:/var/lib/rabbitmq
+
+    minio:
+        image: minio/minio:latest
+        container_name: minio
+        environment:
+            - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+            - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+            - MINIO_DEFAULT_BUCKETS=buck1
+        command: [ "server", "--console-address", ":9001", "/data" ]
+        volumes:
+            - minio_data:/data
+        ports:
+            - "9000:${MINIO_S3_PORT}"
+            - "9001:${MINIO_MANAGEMENT_PORT}"
+        env_file:
+            - ".env"
+
 volumes:
     postgres_data:
     rabbitmq-data:
+    minio_data:
