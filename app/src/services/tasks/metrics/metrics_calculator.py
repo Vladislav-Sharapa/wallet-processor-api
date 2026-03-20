@@ -17,7 +17,6 @@ from app.src.schemas.transaction_schemas import WeekTransactionAnalyticsModel
 from app.src.core import broker
 from app.src.core.database import async_session_maker
 from app.src.core.config import config
-from asyncio import sleep
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +73,6 @@ async def prepare_report(
     await report_repository.commit()
 
     metrics = await calculate_transactions_metrics(weeks)
-
-    await sleep(60)
 
     try:
         async with file_buffer_generator() as file:
