@@ -83,6 +83,8 @@ class MetricsService:
                 registered_and_deposit_users_count.add(transaction.user_id)
 
         return WeekTransactionAnalyticsModel(
+            start_date=self.__date_start.strftime("%d.%m.%Y"),
+            end_date=self.__date_end.strftime("%d.%m.%Y"),
             registered_user_count=registered_user_count,
             registered_and_deposit_users_count=len(registered_and_deposit_users_count),
             not_rollbacked_deposit_sum=not_rollbacked_deposit_sum,

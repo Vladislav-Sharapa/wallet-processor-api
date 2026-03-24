@@ -26,6 +26,7 @@ class User(BaseModel):
     transaction: Mapped[List["Transaction"]] = relationship(
         "Transaction", back_populates="owner"
     )
+    report: Mapped[List["Transaction"]] = relationship("Report", back_populates="owner")
 
     @hybrid_property
     def fullname(self):

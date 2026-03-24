@@ -38,3 +38,6 @@ class SQLAlchemyRepository:
         await self.session.flush()
 
         return model
+
+    async def commit(self) -> None:
+        await self.session.commit()
