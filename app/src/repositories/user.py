@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Optional
 
@@ -24,7 +24,7 @@ class UserRepository(SQLAlchemyRepository):
             query = query.filter(getattr(self.model, field) == value)
         result = await self.session.execute(query)
 
-        return result.scalars()
+        return result.scalars().all()
 
     async def update_password(self, model_id: int, password: str) -> None:
         password_hash = get_password_hash(password)
@@ -47,7 +47,10 @@ class UserRepository(SQLAlchemyRepository):
         self.session.add(user)
         balances = [
             UserBalance(
-                owner=user, currency=str(currency), amount=0, created=datetime.utcnow()
+                owner=user,
+                currency=str(currency),
+                amount=0,
+                created=datetime.now(timezone.utc).replace(tzinfo=None),
             )
             for currency in CurrencyEnum
         ]
