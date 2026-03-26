@@ -1,6 +1,5 @@
 services:
     redis:
-        profiles: ["dev", "test"]
         image: redis:latest
         container_name: redis_container
         environment:
@@ -37,7 +36,6 @@ services:
         tty: true
         stdin_open: true
     postgres:
-        profiles: ["dev", "test"]
         container_name: ${POSTGRES_CONTAINER_NAME}
         image: postgres:latest
         restart: always
@@ -61,7 +59,6 @@ services:
             retries: 5
             start_period: 10s
     rabbitmq:
-        profiles: ["dev", "test"]
         image: rabbitmq:3-management-alpine
         hostname: rabbitmq
         container_name: rabbitmq
@@ -93,7 +90,6 @@ services:
             - ".env"
 
     maildev:
-      profiles: ["test"]
       image: maildev/maildev
       environment:
         - TZ=Europe/Moscow
@@ -103,7 +99,7 @@ services:
         - "${MAILDEV_WEB_PORT}:1080"
         - "${MAILDEV_SMTP_PORT}:1025"
       env_file:
-            - ".test-env"
+            - ".env"
       logging:
         driver: "json-file"
         options:
