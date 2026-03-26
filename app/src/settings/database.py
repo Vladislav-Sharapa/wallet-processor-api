@@ -17,3 +17,10 @@ class PostgreSQLSetting(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
+
+
+class PostgreSQLTestSettings(PostgreSQLSetting):
+    model_config = SettingsConfigDict(
+        env_file="test.env",
+        extra="ignore",
+    )
