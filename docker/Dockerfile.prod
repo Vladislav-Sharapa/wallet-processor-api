@@ -13,12 +13,13 @@ WORKDIR /project
 
 COPY app/pyproject.toml app/poetry.lock ./
 
-RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
+RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
 FROM python:3.12-slim AS runtime
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
-COPY ../app ./app
+WORKDIR /project
 
-ENTRYPOINT ["python", "-m", "app.manage"]
+COPY ../prod.env ./.env
+COPY ../app ./app

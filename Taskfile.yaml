@@ -3,31 +3,38 @@ version: '3'
 
 tasks:
 
-  docker:build:
-    desc: Build dev docker images
-    cmds:
-      - "docker compose --profile dev --env-file .env build"
-    silent: true
-
   docker:up:
     desc: Run dev docker containers
     cmds:
-      - "docker compose -f docker-compose.yaml --env-file .env up"
-    silent: true
+      - cmd: "docker compose -f docker-compose-dev.yaml --env-file dev.env build"
+      - cmd: "docker compose -f docker-compose-dev.yaml --env-file dev.env up"
+        silent: true
 
   docker:down:
     desc: Stop dev docker containers
     cmds:
-      - "docker compose -f docker-compose.yaml --env-file .env down"
-    silent: true
+      - cmd: "docker compose -f docker-compose-dev.yaml --env-file dev.env down"
+        silent: true
 
   docker:tests:
     desc: Run test enviroment
     cmds:
-      - "docker compose -f docker-compose-tests.yaml --env-file test.env build"
-      - "docker compose -f docker-compose-tests.yaml --env-file test.env up"
+      - cmd: "docker compose -f docker-compose-tests.yaml --env-file test.env build"
+      - cmd: "docker compose -f docker-compose-tests.yaml --env-file test.env up --abort-on-container-exit --exit-code-from app_test"
+
+  
+  docker:prod:
+    desc: Run application in docker
+    cmds:
+      - cmd: "docker compose -f docker-compose-prod.yaml --env-file prod.env build"
+      - cmd: "docker compose -f docker-compose-prod.yaml --env-file prod.env up"
 
   worker:start:
     desc: Start taskiq workers
     cmds: 
       - "taskiq worker app.src.core.taskiq:broker --fs-discover --tasks-pattern **/tasks"
+
+  app:start:
+    desc: Start fastapi application
+    cmds:
+      - "python -m app.manage"

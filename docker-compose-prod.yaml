@@ -1,15 +1,39 @@
 services:
 
+    app:
+        build: 
+            context: .
+            dockerfile: ./docker/Dockerfile.prod
+
+        depends_on:
+            redis:
+                condition: service_healthy
+            db_prod:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        ports:
+            - ${APP_PORT}:${APP_CONTAINER_PORT}
+        command: python -m app.manage
+
+    taskiq:
+        build: 
+            context: .
+            dockerfile: ./docker/Dockerfile.prod
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        command: "python -m taskiq worker app.src.core.taskiq:broker --fs-discover --tasks-pattern **/tasks"
     redis:
         image: redis:latest
-        container_name: redis
-        hostname: ${RABBITTMQ_HOST}
+        container_name: ${REDIS_HOST}
+        hostname: ${REDIS_HOST}
         environment:
             - REDIS_PASSWORD=${REDIS_USER_PASSWORD}
             - REDIS_USER=${REDIS_USER}
             - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
-        ports:
-            - ${REDIS_PORT}:${REDIS_CONTAINER_PORT}
+        expose:
+            - ${REDIS_PORT}
         deploy:
             resources:
                 limits:
@@ -37,8 +61,9 @@ services:
         restart: unless-stopped
         tty: true
         stdin_open: true
-    db_dev:
-        container_name: postgres_dev
+
+    db_prod:
+        container_name: postgres_prod
         hostname: ${POSTGRES_HOST}
         image: postgres:latest
         environment:
@@ -46,8 +71,8 @@ services:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
             PGDATA: /var/lib/postgresql/data/pgdata
-        ports:
-            - ${POSTGRES_PORT}:${POSTGRES_CONTAINER_PORT}
+        expose:
+            - ${POSTGRES_PORT}
         volumes:
             - postgres_data:/var/lib/postgresql/data/pgdata
         healthcheck:
@@ -56,13 +81,13 @@ services:
             timeout: 5s
             retries: 5
             start_period: 10s
-        
+            
     rabbitmq:
         image: rabbitmq:3-management-alpine
-        hostname: ${RABBITTMQ_HOST}
-        ports:
-            - "${RABBITMQ_PORT}:${RABBITMQ_CONTAINER_PORT}"
-            - "${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT}"
+        hostname: rabbitmq
+        container_name: rabbitmq
+        expose:
+            - ${RABBITMQ_PORT}
         environment:
             RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
@@ -79,7 +104,6 @@ services:
     minio:
         image: minio/minio:latest
         container_name: minio
-        hostname: ${MINIO_HOST}
         environment:
             - MINIO_ROOT_USER=${MINIO_ROOT_USER}
             - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
@@ -87,24 +111,11 @@ services:
         command: [ "server", "--console-address", ":9001", "/data" ]
         volumes:
             - minio_data:/data
-        ports:
-            - "${MINIO_S3_PORT}:${MINIO_S3_CONTAINER_PORT}"
-            - "${MINIO_MANAGEMENT_PORT}:${MINIO_MANAGEMENT_CONTAINER_PORT}"
-    maildev:
-      image: maildev/maildev
-      environment:
-        - TZ=Europe/Moscow
-        - MAILDEV_WEB_PORT=${MAILDEV_WEB_CONTAINER_PORT}
-        - MAILDEV_SMTP_PORT=${MAILDEV_SMTP_CONTAINER_PORT}
-      ports:
-        - "${MAILDEV_WEB_PORT}:${MAILDEV_WEB_CONTAINER_PORT}"
-        - "${MAILDEV_SMTP_PORT}:${MAILDEV_SMTP_CONTAINER_PORT}"
-      logging:
-        driver: "json-file"
-        options:
-          max-size: "1m"
+        expose:
+            - ${MINIO_S3_PORT}
 
 volumes:
     postgres_data:
+    postgres_prod:
     rabbitmq-data:
     minio_data:

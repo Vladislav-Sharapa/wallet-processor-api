@@ -1,14 +1,25 @@
 services:
+
+    app_test:
+        build: 
+            context: .
+            dockerfile: ./docker/Dockerfile.tests
+        depends_on:
+            db_test:
+                condition: service_healthy
+        command: "python -m pytest -v /app"
+    
     db_test: 
-        container_name: ${POSTGRES_CONTAINER_NAME}
+        container_name: postgres_test
+        hostname: ${POSTGRES_HOST}
         image: postgres:latest
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
             PGDATA: /var/lib/postgresql/data/pgdata
-        ports:
-            - ${POSTGRES_PORT}:5432
+        expose:
+            - ${POSTGRES_PORT}
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
             interval: 10s
@@ -16,6 +27,5 @@ services:
             retries: 5
             start_period: 10s
         restart: on-failure
-        env_file:
-            - test.env
         volumes: []
+        
