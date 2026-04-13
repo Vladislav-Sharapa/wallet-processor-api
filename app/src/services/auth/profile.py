@@ -1,3 +1,4 @@
+import logging
 import secrets
 import string
 from fastapi.responses import JSONResponse
@@ -15,6 +16,8 @@ from app.src.schemas.auth import (
 from app.src.services.notification import NotificationService
 from app.src.services.user import UserService
 from app.src.utils.auth_security import verify_password
+
+logger = logging.getLogger(__name__)
 
 
 class RequestResetPasswordService:
@@ -54,8 +57,9 @@ class RequestResetPasswordService:
                 template_body={"reset_code": code},
                 template_name="email_template.html",
             )
+
         except Exception as e:
-            print(e)
+            logger.info(e)
         finally:
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
