@@ -24,7 +24,7 @@ def event_loop():
 @pytest_asyncio.fixture(scope="session")
 async def engine():
     engine = create_async_engine(
-        url=config.database_test.url,
+        url=config.database.url,
         echo=False,
     )
 
